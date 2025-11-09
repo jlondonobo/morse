@@ -8,9 +8,13 @@ import (
 	"github.com/gopxl/beep/v2/speaker"
 )
 
-func PlayWord(s string) {
+const (
+	WordsPerMinute = 20
+)
+
+func Play(s string) {
 	sr := beep.SampleRate(48000)
-	speaker.Init(sr/3, 4800)
+	speaker.Init(sr, 4800)
 
 	sine, err := generators.SineTone(sr, 700) // hardcode freq for now
 	if err != nil {
@@ -19,10 +23,11 @@ func PlayWord(s string) {
 	}
 	silence := generators.Silence(-1)
 
-	dit := sr.N(60000000)
+	// based on: https://morsecode.world/international/timing/
+	spd := time.Duration(60 * 1000 / (50 * WordsPerMinute)) // in milliseconds
+	dit := sr.N(time.Millisecond * spd)
 	dah := dit * 3
 
-	// todo: Usin word PARIS as standard, convert control to Words Per Second
 	// todo: this is not exact correspondence. Just for convenience assuming
 	// 1-dit silence after every symbol.
 	var m = map[string]func() beep.Streamer{

@@ -6,46 +6,49 @@ import (
 	"log"
 	"os"
 	"strings"
+	"unicode"
+
+	"joselondono/morse/internal/sound"
 
 	"github.com/urfave/cli/v3"
 )
 
 var morseDictionary = map[string]string{
-	"a": "·-",
-	"b": "-···",
-	"c": "-·-·",
-	"d": "-··",
-	"e": "·",
-	"f": "··-·",
-	"g": "--·",
-	"h": "····",
-	"i": "··",
-	"j": "·---",
-	"k": "-·-",
-	"l": "·-··",
+	"a": ".-",
+	"b": "-...",
+	"c": "-.-.",
+	"d": "-..",
+	"e": ".",
+	"f": "..-.",
+	"g": "--.",
+	"h": "....",
+	"i": "..",
+	"j": ".---",
+	"k": "-.-",
+	"l": ".-..",
 	"m": "--",
-	"n": "-·",
+	"n": "-.",
 	"o": "---",
-	"p": "·--·",
-	"q": "--·-",
-	"r": "-·-",
-	"s": "···",
+	"p": ".--.",
+	"q": "--.-",
+	"r": "-.-",
+	"s": "...",
 	"t": "-",
-	"u": "··-",
-	"v": "···-",
-	"w": "·--",
-	"x": "-··-",
-	"y": "-·--",
-	"z": "--··",
-	"1": "·----",
-	"2": "··---",
-	"3": "···--",
-	"4": "····-",
-	"5": "·····",
-	"6": "-····",
-	"7": "--···",
-	"8": "---··",
-	"9": "----·",
+	"u": "..-",
+	"v": "...-",
+	"w": ".--",
+	"x": "-..-",
+	"y": "-.--",
+	"z": "--..",
+	"1": ".----",
+	"2": "..---",
+	"3": "...--",
+	"4": "....-",
+	"5": ".....",
+	"6": "-....",
+	"7": "--...",
+	"8": "---..",
+	"9": "----.",
 	"0": "-----",
 	" ": "/",
 }
@@ -54,7 +57,13 @@ func toMorse(s string) string {
 	// edge case: spaces
 	var sb strings.Builder
 	for _, v := range s {
-		sb.WriteString(morseDictionary[string(v)])
+		chr := string(unicode.ToLower(v))
+		repl, ok := morseDictionary[chr]
+		if !ok {
+			log.Fatalf("Unrecognized character %s", string(v))
+		}
+
+		sb.WriteString(repl)
 		sb.WriteString(" ")
 	}
 	return sb.String()
@@ -62,7 +71,7 @@ func toMorse(s string) string {
 
 func main() {
 	var translateInput string
-
+	var play bool
 	cmd := &cli.Command{
 		Name:  "morse",
 		Usage: "beep beep beeep",
@@ -72,8 +81,20 @@ func main() {
 				Destination: &translateInput,
 			},
 		},
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:        "sound",
+				Value:       false,
+				Usage:       "plays on speakers",
+				Destination: &play,
+			},
+		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			fmt.Println(toMorse(translateInput))
+			seq := toMorse(translateInput)
+			fmt.Println(seq)
+			if play {
+				sound.Play(seq)
+			}
 			return nil
 		},
 	}
