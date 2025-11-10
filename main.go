@@ -72,6 +72,8 @@ func toMorse(s string) string {
 func main() {
 	var translateInput string
 	var play bool
+	var output string
+
 	cmd := &cli.Command{
 		Name:  "morse",
 		Usage: "beep beep beeep",
@@ -88,12 +90,20 @@ func main() {
 				Usage:       "plays on speakers",
 				Destination: &play,
 			},
+			&cli.StringFlag{
+				Name:        "output",
+				Usage:       "outputs as wav file",
+				Destination: &output,
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			seq := toMorse(translateInput)
 			fmt.Println(seq)
 			if play {
 				sound.Play(seq)
+			}
+			if len(output) > 0 {
+				sound.Write(seq, output)
 			}
 			return nil
 		},
