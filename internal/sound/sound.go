@@ -13,24 +13,20 @@ import (
 
 const (
 	WordsPerMinute = 20
+	SampleRate     = beep.SampleRate(48000)
+	Frequency      = 700
 )
 
-// Todo: Extract generator
-
-func Play(s string) {
-	sr := beep.SampleRate(48000)
-	speaker.Init(sr, 4800)
-
-	sine, err := generators.SineTone(sr, 700) // hardcode freq for now
+// Todo: Would be a lot more efficiento to seek Streamer to 0 instead of recreating it.
+func generate(s string) beep.Streamer {
+	sine, err := generators.SineTone(SampleRate, Frequency) // hardcode freq for now
 	if err != nil {
-
 		panic(err)
 	}
 	silence := generators.Silence(-1)
-
 	// based on: https://morsecode.world/international/timing/
 	spd := time.Duration(60 * 1000 / (50 * WordsPerMinute)) // in milliseconds
-	dit := sr.N(time.Millisecond * spd)
+	dit := SampleRate.N(time.Millisecond * spd)
 	dah := dit * 3
 
 	// todo: this is not exact correspondence. Just for convenience assuming
@@ -41,69 +37,40 @@ func Play(s string) {
 		" ": func() beep.Streamer { return beep.Take(dit*2, silence) },
 		"/": func() beep.Streamer { return beep.Take(0, silence) },
 	}
-
-	ch := make(chan struct{})
 	var sounds []beep.Streamer
 
 	for _, v := range s {
 		st, ok := m[string(v)]
 		if !ok {
-			panic("Unrecognize symbol.")
+			log.Fatal("Unrecognize symbol.")
 		}
 		sounds = append(sounds, st(), beep.Take(dit, silence))
 	}
-	sounds = append(sounds, beep.Callback(func() {
-		ch <- struct{}{}
-	}))
-	speaker.Play(beep.Seq(sounds...))
+	return beep.Seq(sounds...)
+}
+
+func Play(s string) {
+	speaker.Init(SampleRate, 4800)
+
+	ch := make(chan struct{})
+	seq := generate(s)
+
+	sounds := beep.Seq(seq, beep.Callback(func() { ch <- struct{}{} }))
+	speaker.Play(sounds)
 	<-ch
 	time.Sleep(200 * time.Millisecond) // to ensure last signal plays
 }
 
-func Write(s string, outfile string) {
-	sr := beep.SampleRate(48000)
-	speaker.Init(sr, 4800)
-
-	sine, err := generators.SineTone(sr, 700) // hardcode freq for now
+func Write(s string, name string) {
+	finalStreamer := generate(s)
+	outFile, err := os.Create(name)
 	if err != nil {
-
-		panic(err)
+		log.Fatal("Unable to create file.")
 	}
-	silence := generators.Silence(-1)
-
-	// based on: https://morsecode.world/international/timing/
-	spd := time.Duration(60 * 1000 / (50 * WordsPerMinute)) // in milliseconds
-	dit := sr.N(time.Millisecond * spd)
-	dah := dit * 3
-
-	// todo: this is not exact correspondence. Just for convenience assuming
-	// 1-dit silence after every symbol.
-	var m = map[string]func() beep.Streamer{
-		".": func() beep.Streamer { return beep.Take(dit, sine) },
-		"-": func() beep.Streamer { return beep.Take(dah, sine) },
-		" ": func() beep.Streamer { return beep.Take(dit*2, silence) },
-		"/": func() beep.Streamer { return beep.Take(0, silence) },
-	}
-
-	var sounds []beep.Streamer
-
-	for _, v := range s {
-		st, ok := m[string(v)]
-		if !ok {
-			panic("Unrecognize symbol.")
-		}
-		sounds = append(sounds, st(), beep.Take(dit, silence))
-	}
-
-	finalStreamer := beep.Seq(sounds...)
-	f, err := os.Create(outfile)
-	if err != nil {
-		panic("Unable to create file.")
-	}
+	defer outFile.Close()
 	fmt := beep.Format{SampleRate: 48000, NumChannels: 2, Precision: 2}
-	err = wav.Encode(f, finalStreamer, fmt)
+	err = wav.Encode(outFile, finalStreamer, fmt)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }

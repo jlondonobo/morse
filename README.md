@@ -8,7 +8,9 @@ A go-based CLI for translating strings to morse code.
 
 ## Roadmap
 - [x] Enable saving sound to file
-- [ ] Enable shorthand flags
+- [ ] Make functions run in parallel
+- [ ] Set up short-version flags
+- [ ] Update flag names to use standard CLI names
 - [ ] Enable editing sound qualities
     - [ ] Speed
     - [ ] Pitch
