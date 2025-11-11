@@ -56,7 +56,6 @@ var morseDictionary = map[string]string{
 }
 
 func toMorse(s string) string {
-	// edge case: spaces
 	var sb strings.Builder
 	for _, v := range s {
 		chr := string(unicode.ToLower(v))
@@ -79,8 +78,9 @@ func main() {
 	var output string
 
 	cmd := &cli.Command{
-		Name:  "morse",
-		Usage: "beep beep beeep",
+		UseShortOptionHandling: true,
+		Name:                   "morse",
+		Usage:                  "beep beep beeep",
 		Arguments: []cli.Argument{
 			&cli.StringArg{
 				Name:        "input",
@@ -90,12 +90,14 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:        "sound",
+				Aliases:     []string{"s"},
 				Value:       false,
 				Usage:       "plays on speakers",
 				Destination: &play,
 			},
 			&cli.StringFlag{
 				Name:        "output",
+				Aliases:     []string{"o"},
 				Usage:       "outputs as wav file",
 				Destination: &output,
 			},
