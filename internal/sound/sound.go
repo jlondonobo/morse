@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"sync"
+
 	"github.com/gopxl/beep/v2"
 	"github.com/gopxl/beep/v2/generators"
 	"github.com/gopxl/beep/v2/speaker"
@@ -49,7 +51,7 @@ func generate(s string) beep.Streamer {
 	return beep.Seq(sounds...)
 }
 
-func Play(s string) {
+func Play(s string, wg *sync.WaitGroup) {
 	speaker.Init(SampleRate, 4800)
 
 	ch := make(chan struct{})
@@ -59,9 +61,10 @@ func Play(s string) {
 	speaker.Play(sounds)
 	<-ch
 	time.Sleep(200 * time.Millisecond) // to ensure last signal plays
+	wg.Done()
 }
 
-func Write(s string, name string) {
+func Write(s string, name string, wg *sync.WaitGroup) {
 	finalStreamer := generate(s)
 	outFile, err := os.Create(name)
 	if err != nil {
@@ -73,4 +76,5 @@ func Write(s string, name string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	wg.Done()
 }

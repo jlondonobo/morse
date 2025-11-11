@@ -10,6 +10,8 @@ import (
 
 	"joselondono/morse/internal/sound"
 
+	"sync"
+
 	"github.com/urfave/cli/v3"
 )
 
@@ -70,6 +72,8 @@ func toMorse(s string) string {
 }
 
 func main() {
+	var wg sync.WaitGroup
+
 	var translateInput string
 	var play bool
 	var output string
@@ -100,11 +104,14 @@ func main() {
 			seq := toMorse(translateInput)
 			fmt.Println(seq)
 			if play {
-				sound.Play(seq)
+				wg.Add(1)
+				go sound.Play(seq, &wg)
 			}
 			if len(output) > 0 {
-				sound.Write(seq, output)
+				wg.Add(1)
+				go sound.Write(seq, output, &wg)
 			}
+			wg.Wait()
 			return nil
 		},
 	}
