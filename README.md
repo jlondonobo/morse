@@ -21,7 +21,7 @@ morse 'Let's go Carlos lets go' -so 'carlitos.wav'
 - [x] Enable saving sound to file
 - [x] Make functions run in parallel
 - [x] Set up short-version flags
-- [ ] Extend punctuation
+- [x] Extend punctuation
 - [ ] Add a default file name for better ergonomics
 - [ ] Enable editing sound qualities
   - [ ] Speed
