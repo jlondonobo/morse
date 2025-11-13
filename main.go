@@ -114,7 +114,7 @@ func main() {
 			&cli.StringFlag{
 				Name:        "output",
 				Aliases:     []string{"o"},
-				Usage:       "outputs as wav file",
+				Usage:       "writes sound to wav file",
 				Destination: &output,
 			},
 		},
