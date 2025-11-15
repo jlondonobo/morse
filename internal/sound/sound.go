@@ -14,12 +14,11 @@ import (
 const (
 	WordsPerMinute = 20
 	SampleRate     = beep.SampleRate(48000)
-	Frequency      = 700
 )
 
 // Todo: Would be a lot more efficiento to seek Streamer to 0 instead of recreating it.
-func generate(s string) beep.Streamer {
-	sine, err := generators.SineTone(SampleRate, Frequency) // hardcode freq for now
+func generate(s string, pitch uint16) beep.Streamer {
+	sine, err := generators.SineTone(SampleRate, float64(pitch))
 	if err != nil {
 		log.Fatal("Error generating sine tone")
 	}
@@ -49,11 +48,11 @@ func generate(s string) beep.Streamer {
 	return beep.Seq(sounds...)
 }
 
-func Play(s string) {
+func Play(s string, pitch uint16) {
 	speaker.Init(SampleRate, 4800)
 
 	ch := make(chan struct{})
-	seq := generate(s)
+	seq := generate(s, pitch)
 
 	sounds := beep.Seq(seq, beep.Callback(func() { ch <- struct{}{} }))
 	speaker.Play(sounds)
@@ -61,8 +60,8 @@ func Play(s string) {
 	time.Sleep(200 * time.Millisecond) // to ensure last signal plays
 }
 
-func Write(s string, name string) {
-	finalStreamer := generate(s)
+func Write(s string, name string, pitch uint16) {
+	finalStreamer := generate(s, pitch)
 	outFile, err := os.Create(name)
 	if err != nil {
 		log.Fatal("Unable to create file.")

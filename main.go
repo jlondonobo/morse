@@ -15,6 +15,10 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+const (
+	DefaultPitch = 700
+)
+
 var morseDictionary = map[string]string{
 	"a":  ".-",
 	"b":  "-...",
@@ -93,6 +97,7 @@ func main() {
 	var play bool
 	var output bool
 	var file string
+	var pitch uint16
 
 	cmd := &cli.Command{
 		UseShortOptionHandling: true,
@@ -124,21 +129,28 @@ func main() {
 				Usage:       "writes sound to wav file",
 				Destination: &file,
 			},
+			&cli.Uint16Flag{
+				Name:        "pitch",
+				Aliases:     []string{"p"},
+				Usage:       "sets the ouput pitch",
+				Destination: &pitch,
+				Value:       DefaultPitch,
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			seq := toMorse(translateInput)
 			fmt.Println(seq)
 			if play {
-				wg.Go(func() { sound.Play(seq) })
+				wg.Go(func() { sound.Play(seq, pitch) })
 			}
 			if output && (len(file) > 0) {
 				log.Fatal("Cannot use --output and --output-file at the same time.")
 				return nil
 			}
 			if output {
-				wg.Go(func() { sound.Write(seq, "sound.wav") })
+				wg.Go(func() { sound.Write(seq, "sound.wav", pitch) })
 			} else if len(file) > 0 {
-				wg.Go(func() { sound.Write(seq, file) })
+				wg.Go(func() { sound.Write(seq, file, pitch) })
 			}
 
 			wg.Wait()
