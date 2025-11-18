@@ -16,6 +16,12 @@ const (
 	SampleRate     = beep.SampleRate(48000)
 )
 
+type Config struct {
+	Pitch    uint16
+	Wpm      uint8
+	WaveType string
+}
+
 var ToneGenerator = map[string]func(beep.SampleRate, float64) (beep.Streamer, error){
 	"sine":     generators.SineTone,
 	"sawtooth": generators.SawtoothTone,
@@ -24,18 +30,18 @@ var ToneGenerator = map[string]func(beep.SampleRate, float64) (beep.Streamer, er
 }
 
 // Todo: Would be a lot more efficiento to seek Streamer to 0 instead of recreating it.
-func generate(s string, pitch uint16, wpm uint8, waveType string) beep.Streamer {
-	g, ok := ToneGenerator[waveType]
+func generate(s string, conf *Config) beep.Streamer {
+	g, ok := ToneGenerator[conf.WaveType]
 	if !ok {
 		log.Fatalf("Invalid waveType")
 	}
-	sine, err := g(SampleRate, float64(pitch))
+	sine, err := g(SampleRate, float64(conf.Pitch))
 	if err != nil {
 		log.Fatal("Error generating sine tone")
 	}
 	silence := generators.Silence(-1)
 	// based on: https://morsecode.world/international/timing/
-	unitDur := time.Duration(60*1000/(50*int(wpm))) * time.Millisecond // in milliseconds
+	unitDur := time.Duration(60*1000/(50*int(conf.Wpm))) * time.Millisecond // in milliseconds
 	dit := SampleRate.N(unitDur)
 	dah := dit * 3
 
@@ -59,11 +65,11 @@ func generate(s string, pitch uint16, wpm uint8, waveType string) beep.Streamer 
 	return beep.Seq(sounds...)
 }
 
-func Play(s string, pitch uint16, wpm uint8, waveType string) {
+func Play(s string, conf *Config) {
 	speaker.Init(SampleRate, 4800)
 
 	ch := make(chan struct{})
-	seq := generate(s, pitch, wpm, waveType)
+	seq := generate(s, conf)
 
 	sounds := beep.Seq(seq, beep.Callback(func() { ch <- struct{}{} }))
 	speaker.Play(sounds)
@@ -71,8 +77,8 @@ func Play(s string, pitch uint16, wpm uint8, waveType string) {
 	time.Sleep(200 * time.Millisecond) // to ensure last signal plays
 }
 
-func Write(s string, name string, pitch uint16, wpm uint8, waveType string) {
-	finalStreamer := generate(s, pitch, wpm, waveType)
+func Write(s string, name string, conf *Config) {
+	finalStreamer := generate(s, conf)
 	outFile, err := os.Create(name)
 	if err != nil {
 		log.Fatal("Unable to create file.")

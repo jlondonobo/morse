@@ -1,9 +1,10 @@
 package main
 
-import "joselondono/morse/internal/sound"
+import "github.com/jlondonobo/morse/internal/sound"
 
 func main() {
-	sound.Play("....   .. / -   ....   .   . ..   .", 700, 20, "sine")
+	conf := &sound.Config{Pitch: 700, Wpm: 20, WaveType: "sine"}
+	sound.Play("....   .. / -   ....   .   . ..   .", conf)
 }
 
 // Next steps: Use this in the CLI to produce single words
