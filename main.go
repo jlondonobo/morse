@@ -9,7 +9,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/joselondono/morse/internal/sound"
+	"github.com/jlondonobo/morse/internal/sound"
 
 	"sync"
 
