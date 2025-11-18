@@ -1,6 +1,7 @@
-# Go Morse
+<p align="center">
+<img width="1628" height="677" alt="Untitled" src="https://github.com/user-attachments/assets/ce58515f-e25e-4e50-aa08-1438f3676f7f" />
+</p>
 
-A go-based CLI for translating strings to morse code.
 
 ## Features
 
