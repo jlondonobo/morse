@@ -19,6 +19,7 @@ import (
 const (
 	DefaultPitch          = 700
 	DefaultWordsPerMinute = 20
+	DefaultTone           = "sine"
 )
 
 var morseDictionary = map[string]string{
@@ -103,6 +104,7 @@ func main() {
 	var file string
 	var pitch uint16
 	var wpm uint8
+	var waveType string
 
 	cmd := &cli.Command{
 		UseShortOptionHandling: true,
@@ -147,6 +149,19 @@ func main() {
 				Destination: &wpm,
 				Value:       DefaultWordsPerMinute,
 			},
+			&cli.StringFlag{
+				Name:        "tone",
+				Usage:       "sets the ouput tone, possible values are 'sine', 'triangle', 'sawtooth', 'square'",
+				Destination: &waveType,
+				Value:       DefaultTone,
+				Action: func(ctxt context.Context, cmd *cli.Command, v string) error {
+					_, ok := sound.ToneGenerator[v]
+					if !ok {
+						return fmt.Errorf("invalid tone '%v' must be one of 'sine' 'triangle' 'sawtooth' 'square'", v)
+					}
+					return nil
+				},
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if pitch < 300 || pitch > 1000 {
@@ -159,17 +174,17 @@ func main() {
 			seq := toMorse(translateInput)
 			fmt.Println(seq)
 			if play {
-				wg.Go(func() { sound.Play(seq, pitch, wpm) })
+				wg.Go(func() { sound.Play(seq, pitch, wpm, waveType) })
 			}
 			if output && (len(file) > 0) {
 				log.Fatal("Cannot use --output and --output-file at the same time.")
 				return nil
 			}
 			if output {
-				wg.Go(func() { sound.Write(seq, "sound.wav", pitch, wpm) })
+				wg.Go(func() { sound.Write(seq, "sound.wav", pitch, wpm, waveType) })
 			} else if len(file) > 0 {
 				wg.Go(func() {
-					sound.Write(seq, file, pitch, wpm)
+					sound.Write(seq, file, pitch, wpm, waveType)
 				})
 			}
 

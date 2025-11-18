@@ -16,9 +16,20 @@ const (
 	SampleRate     = beep.SampleRate(48000)
 )
 
+var ToneGenerator = map[string]func(beep.SampleRate, float64) (beep.Streamer, error){
+	"sine":     generators.SineTone,
+	"sawtooth": generators.SawtoothTone,
+	"square":   generators.SquareTone,
+	"triangle": generators.TriangleTone,
+}
+
 // Todo: Would be a lot more efficiento to seek Streamer to 0 instead of recreating it.
-func generate(s string, pitch uint16, wpm uint8) beep.Streamer {
-	sine, err := generators.SineTone(SampleRate, float64(pitch))
+func generate(s string, pitch uint16, wpm uint8, waveType string) beep.Streamer {
+	g, ok := ToneGenerator[waveType]
+	if !ok {
+		log.Fatalf("Invalid waveType")
+	}
+	sine, err := g(SampleRate, float64(pitch))
 	if err != nil {
 		log.Fatal("Error generating sine tone")
 	}
@@ -48,11 +59,11 @@ func generate(s string, pitch uint16, wpm uint8) beep.Streamer {
 	return beep.Seq(sounds...)
 }
 
-func Play(s string, pitch uint16, wpm uint8) {
+func Play(s string, pitch uint16, wpm uint8, waveType string) {
 	speaker.Init(SampleRate, 4800)
 
 	ch := make(chan struct{})
-	seq := generate(s, pitch, wpm)
+	seq := generate(s, pitch, wpm, waveType)
 
 	sounds := beep.Seq(seq, beep.Callback(func() { ch <- struct{}{} }))
 	speaker.Play(sounds)
@@ -60,8 +71,8 @@ func Play(s string, pitch uint16, wpm uint8) {
 	time.Sleep(200 * time.Millisecond) // to ensure last signal plays
 }
 
-func Write(s string, name string, pitch uint16, wpm uint8) {
-	finalStreamer := generate(s, pitch, wpm)
+func Write(s string, name string, pitch uint16, wpm uint8, waveType string) {
+	finalStreamer := generate(s, pitch, wpm, waveType)
 	outFile, err := os.Create(name)
 	if err != nil {
 		log.Fatal("Unable to create file.")

@@ -32,13 +32,13 @@ morse 'Lets go, Carlos, lets go' -sf 'carlitos.wav'
 - [x] Set up short-version flags
 - [x] Extend punctuation
 - [x] Add a default file name for better ergonomics
-- [ ] Enable editing sound qualities
-
-  - [ ] Speed
-  - [ ] Pitch
-  - [ ] Volume
+- [x] Enable editing sound qualities
+  - [x] Speed
+  - [x] Pitch
+  - [x] Tone
 
 - [ ] Improve efficiency of steream construction / duplication.
+- [ ] Improve error handling in goroutine
 
 ## Configuring sounds
 
